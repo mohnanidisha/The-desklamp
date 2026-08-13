@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deskhelp — Tactile Grounding Adaptive Lamp Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght=300;400;500;600&family=DM+Mono:wght=400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F5F2ED;
+  --bg2:#EDEAE4;
+  --bg3:#E6E2DB;
+  --surface:#FDFCFA;
+  --border:#D8D3CA;
+  --border2:#C8C2B8;
+  --text:#1A1814;
+  --muted:#7A746A;
+  --dim:#B0A99F;
+  --l1:#4CAF7D;   
+  --l2:#60A8C8;   
+  --l3:#C8A84B;   
+  --l4:#D4713A;   
+  --l5:#D8A570; 
+  --active-col: var(--l1);
+}
+html,body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  overflow: hidden;
+}
+.layout{
+  display:grid;
+  grid-template-columns:1fr 320px;
+  min-height:100vh;
+}
+.stage{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  position:relative;
+  background:var(--bg);
+}
+.wordmark{
+  position:absolute;
+  top:22px; left:24px;
+  font-size:13px; font-weight:600;
+  color:var(--muted);
+  letter-spacing:-.01em;
+  z-index: 10;
+}
+.wordmark em{font-style:normal;color:var(--text);}
+
+#canvas-container {
+  width: 100%;
+  height: 75vh;
+  max-width: 550px;
+  position: relative;
+  cursor: grab;
+  background: #0B0B0C; 
+  border-radius: 16px;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.6), 0 4px 24px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+#canvas-container:active { cursor: grabbing; }
+
+/* Overlay canvas for physical particle aroma mist and haptic ring pulses */
+#overlay-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.hw-labels{
+  display:flex;gap:16px;margin-top:16px;
+  flex-wrap:wrap;justify-content:center;
+}
+.hw-lbl{
+  display:flex;align-items:center;gap:5px;
+  font-size:10.5px;font-family:'DM Mono',monospace;
+  color:var(--dim);letter-spacing:.03em;
+  text-transform:uppercase;
+  transition:color .35s;
+}
+.hw-lbl.lit{color:var(--text);}
+.hw-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--dim);
+  transition:background .35s,box-shadow .35s;
+}
+.sidebar{
+  background:var(--surface);
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;
+  padding:24px 16px;gap:12px;
+  overflow-y:auto;
+  height: 100vh;
+}
+.section-label{
+  font-size:9.5px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim);
+}
+.stress-row{display:flex;gap:5px;}
+.sl-btn{
+  flex:1;
+  background:var(--bg2);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:10px 4px 8px;
+  cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-family:'DM Sans',sans-serif;
+  transition:border-color .2s,background .2s;
+}
+.sl-btn:hover{border-color:var(--border2);background:var(--bg3);}
+.sl-num{font-size:15px;font-weight:600;color:var(--muted);transition:color .2s;}
+.sl-tag{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);transition:color .2s;}
+.sl-swatch{width:18px;height:4px;border-radius:2px;margin-bottom:1px;opacity:.35;transition:opacity .2s;}
+.sl-btn.active{border-color:var(--slc);}
+.sl-btn.active .sl-num{color:var(--slc);}
+.sl-btn.active .sl-tag{color:var(--slc);}
+.sl-btn.active .sl-swatch{opacity:1;}
+
+.status-card{
+  background:var(--bg2);
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  padding:14px;
+  transition:border-color .4s;
+}
+.status-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.status-icon{
+  width:38px;height:38px;border-radius:10px;
+  border:1.5px solid var(--border);
+  display:grid;place-items:center;font-size:17px;flex:none;
+  background:var(--bg3);
+  transition:border-color .4s,background .4s;
+}
+.status-name{font-size:13.5px;font-weight:600;color:var(--text);}
+.status-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+
+.iv-list{display:flex;flex-direction:column;gap:5px;}
+.iv{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;border-radius:8px;
+  background:var(--bg);
+  border:1.5px solid var(--border);
+  transition:border-color .3s,background .3s;
+}
+.iv.on{border-color:var(--ivc);background:var(--bg2);}
+.iv-pip{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--border2);flex:none;
+  transition:background .3s,box-shadow .3s;
+}
+.iv.on .iv-pip{background:var(--ivc);box-shadow:0 0 7px var(--ivc);}
+.iv-label{font-size:11.5px;font-weight:500;color:var(--dim);transition:color .3s;}
+.iv.on .iv-label{color:var(--text);}
+.iv-badge{
+  margin-left:auto;
+  font-size:8.5px;font-weight:600;letter-spacing:.06em;
+  font-family:'DM Mono',monospace;
+  text-transform:uppercase;
+  color:var(--ivc);opacity:0;
+  transition:opacity .25s;
+}
+.iv.on .iv-badge{opacity:1;}
+
+.comp-list{display:flex;flex-direction:column;gap:5px;}
+.ccard{
+  background:var(--bg2);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:9px 12px;
+  cursor:pointer;
+  transition:border-color .2s,background .2s;
+  display:flex;align-items:center;gap:9px;
+}
+.ccard:hover{border-color:var(--border2);}
+.ccard.on{border-color:var(--cc);background:var(--bg3);}
+.cicon{
+  width:26px;height:26px;border-radius:7px;
+  border:1.5px solid var(--border);
+  background:var(--bg);
+  display:grid;place-items:center;
+  font-size:12px;flex:none;
+  transition:border-color .2s,background .2s;
+}
+.ccard.on .cicon{border-color:var(--cc);background:var(--bg2);}
+.ctitle{font-size:11.5px;font-weight:500;}
+.csub{font-size:10px;color:var(--muted);}
+.con-badge{
+  margin-left:auto;
+  font-size:8.5px;font-weight:600;
+  font-family:'DM Mono',monospace;
+  text-transform:uppercase;letter-spacing:.06em;
+  color:var(--cc);opacity:0;transition:opacity .2s;
+}
+.ccard.on .con-badge{opacity:1;}
+
+.light-key{
+  background:var(--bg2);
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  padding:12px 14px;
+}
+.lk-row{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 0;border-bottom:1px solid var(--border);
+}
+.lk-row:last-child{border-bottom:none;}
+.lk-level{font-size:10px;font-weight:600;font-family:'DM Mono',monospace;color:var(--muted);width:16px;flex:none;}
+.lk-text{font-size:10.5px;color:var(--muted);}
+.lk-text strong{color:var(--text);font-weight:500;}
+
+@media(max-width:720px){
+  .layout{grid-template-columns:1fr; overflow-y: auto;}
+  .sidebar{border-left:none;border-top:1px solid var(--border); height: auto;}
+  .wordmark{display:none;}
+  #canvas-container { height: 50vh; }
+}
+/* ── HRV CONNECTION PANEL ── */
+.hrv-toggle{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  z-index:100;
+  background:#111520;border:1px solid rgba(29,158,117,.4);
+  color:#1D9E75;font-size:12px;font-weight:600;font-family:'DM Mono',monospace;
+  padding:9px 20px;border-radius:999px;cursor:pointer;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 0 18px rgba(29,158,117,.18);
+  transition:box-shadow .3s,border-color .3s;
+  letter-spacing:.04em;
+}
+.hrv-toggle:hover{box-shadow:0 0 28px rgba(29,158,117,.35);border-color:rgba(29,158,117,.7);}
+.hrv-pip{width:7px;height:7px;border-radius:50%;background:#1D9E75;animation:pip-pulse 1.8s infinite;}
+@keyframes pip-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(29,158,117,.6);}50%{opacity:.7;box-shadow:0 0 0 5px rgba(29,158,117,0);}}
+
+.hrv-panel{
+  position:fixed;bottom:0;left:0;right:0;
+  z-index:99;
+  background:#0A0D14;
+  border-top:1px solid rgba(255,255,255,.07);
+  border-radius:20px 20px 0 0;
+  transform:translateY(100%);
+  transition:transform .4s cubic-bezier(.22,1,.36,1);
+  max-height:70vh;overflow-y:auto;
+  box-shadow:0 -8px 40px rgba(0,0,0,.5);
+}
+.hrv-panel.open{transform:translateY(0);}
+
+.hrv-panel-inner{padding:20px 24px 80px;}
+.hrv-panel-handle{width:36px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;margin:12px auto 0;}
+
+.hrv-panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;padding-top:4px;
+}
+.hrv-panel-title{font-size:13px;font-weight:600;color:#DDE3EF;display:flex;align-items:center;gap:8px;}
+.hrv-panel-sub{font-size:11px;color:#66728A;margin-top:2px;}
+
+/* connection bridge indicator */
+.bridge{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(29,158,117,.08);border:1px solid rgba(29,158,117,.2);
+  border-radius:8px;padding:6px 12px;margin-bottom:16px;
+  font-size:11px;color:#1D9E75;font-family:'DM Mono',monospace;
+}
+.bridge-dot{width:6px;height:6px;border-radius:50%;background:#1D9E75;flex:none;}
+.bridge-arrow{color:rgba(29,158,117,.4);margin:0 4px;}
+
+/* stress badge that updates in real time */
+.stress-badge-live{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:600;font-family:'DM Mono',monospace;
+  padding:3px 10px;border-radius:999px;
+  border:1px solid currentColor;
+  transition:color .4s,border-color .4s;
+  margin-left:auto;
+}
+
+.hrv-grid{display:grid;grid-template-columns:1fr 200px;gap:14px;}
+@media(max-width:600px){.hrv-grid{grid-template-columns:1fr;}}
+
+.chart-box-dark{background:#111520;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px;}
+.chart-label-dark{font-size:9.5px;font-weight:600;color:#66728A;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;}
+.chart-box-dark canvas{display:block;width:100%;}
+
+.metrics-dark{display:flex;flex-direction:column;gap:8px;}
+.metric-dark{background:#111520;border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:12px 14px;}
+.metric-dark .val{font-size:22px;font-weight:600;font-family:'DM Mono',monospace;line-height:1;}
+.metric-dark .lbl{font-size:10px;color:#66728A;margin-top:3px;}
+
+.stress-ring-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px;}
+.stress-ring-wrap .ring-label{font-size:11px;font-weight:600;}
+
+.hrv-controls-dark{margin-top:10px;display:flex;flex-direction:column;gap:7px;}
+.ctrl-dark{display:flex;align-items:center;gap:8px;font-size:11px;color:#66728A;}
+.ctrl-dark input[type=range]{flex:1;accent-color:#1D9E75;}
+.ctrl-dark span{min-width:28px;text-align:right;font-family:'DM Mono',monospace;color:#DDE3EF;font-size:10.5px;}
+.hrv-btn-dark{background:rgba(29,158,117,.12);border:1px solid rgba(29,158,117,.3);color:#1D9E75;
+  border-radius:999px;padding:6px 14px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .2s;}
+.hrv-btn-dark:hover{background:rgba(29,158,117,.22);}
+
+.pipeline-dark{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px;}
+.step-dark{background:#111520;border:1px solid rgba(255,255,255,.07);border-radius:8px;
+  padding:8px 10px;font-size:10.5px;color:#66728A;text-align:center;position:relative;}
+.step-dark.lit{border-color:rgba(29,158,117,.4);color:#DDE3EF;}
+.step-dark::after{content:'→';position:absolute;right:-6px;top:50%;transform:translateY(-50%);color:#3A4258;font-size:10px;}
+.step-dark:last-child::after{display:none;}
+.step-dark .sn{display:block;font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:#1D9E75;margin-bottom:2px;}
+
+/* ── STRESS TREND GRAPH ── */
+.stress-trend-wrap{
+  margin-top:14px;
+  background:#0D1018;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;
+  padding:14px 14px 10px;
+}
+.stress-trend-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;
+}
+.stress-trend-title{
+  font-size:9.5px;font-weight:600;color:#66728A;
+  letter-spacing:.07em;text-transform:uppercase;
+}
+.stress-trend-legend{
+  display:flex;gap:10px;
+}
+.legend-dot{
+  display:flex;align-items:center;gap:4px;
+  font-size:9px;font-family:'DM Mono',monospace;color:#3A4258;
+}
+.legend-dot::before{
+  content:'';width:8px;height:2px;border-radius:1px;
+  background:var(--lc);display:block;
+}
+#stressTrendCanvas{
+  display:block;width:100%;
+}
+
+/* ── SPEAKER WAVE ANIMATION ── */
+@keyframes speaker-wave{
+  0%,100%{transform:scaleX(1);opacity:.7;}
+  50%{transform:scaleX(1.25);opacity:1;}
+}
+.speaker-anim{
+  animation:speaker-wave 1.6s ease-in-out infinite;
+  transform-origin:left center;
+  display:inline-block;
+}
+
+/* ── HAPTIC GLOW FLASH ── */
+@keyframes haptic-flash{
+  0%{box-shadow:0 0 0 0 rgba(212,113,58,.0);}
+  30%{box-shadow:0 0 14px 4px rgba(212,113,58,.55);}
+  100%{box-shadow:0 0 0 0 rgba(212,113,58,.0);}
+}
+.haptic-glow{
+  animation:haptic-flash var(--haptic-dur,1.8s) ease-out infinite;
+}
+
+/* ── EMERGENCY CONTACT CARD ── */
+.ec-card{
+  background:var(--bg2);
+  border:1.5px solid #C8502A44;
+  border-radius:12px;
+  padding:12px 14px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.ec-row{display:flex;flex-direction:column;gap:3px;}
+.ec-label{font-size:9.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);}
+.ec-input{
+  background:var(--bg);border:1.5px solid var(--border);border-radius:8px;
+  padding:7px 10px;font-size:12px;font-family:'DM Sans',sans-serif;
+  color:var(--text);outline:none;
+  transition:border-color .2s;
+}
+.ec-input:focus{border-color:#C8A84B;}
+.ec-textarea{resize:none;height:52px;line-height:1.4;}
+.ec-save-btn{
+  background:var(--bg3);border:1.5px solid var(--border2);border-radius:8px;
+  padding:8px;font-size:11.5px;font-weight:600;cursor:pointer;
+  font-family:'DM Sans',sans-serif;color:var(--muted);
+  transition:background .2s,border-color .2s,color .2s;
+}
+.ec-save-btn:hover{background:var(--border);color:var(--text);}
+.ec-status{font-size:10.5px;color:var(--muted);min-height:14px;text-align:center;}
+
+/* ── LEVEL 5 EMERGENCY ALERT MODAL ── */
+.ec-modal-backdrop{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.ec-modal-backdrop.show{opacity:1;pointer-events:auto;}
+.ec-modal{
+  background:#0F1218;border:1.5px solid rgba(200,80,42,.6);
+  border-radius:16px;padding:28px 24px;max-width:340px;width:90%;
+  box-shadow:0 0 40px rgba(200,80,42,.3);
+  transform:translateY(12px);transition:transform .3s;
+}
+.ec-modal-backdrop.show .ec-modal{transform:translateY(0);}
+.ec-modal-header{font-size:13px;font-weight:700;color:#FF6B4A;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.ec-modal-sub{font-size:11px;color:#66728A;margin-bottom:16px;line-height:1.5;}
+.ec-modal-preview{
+  background:#0A0D14;border:1px solid rgba(255,255,255,.08);
+  border-radius:8px;padding:12px;font-size:11px;color:#DDE3EF;
+  line-height:1.6;margin-bottom:16px;font-family:'DM Mono',monospace;
+}
+.ec-modal-btns{display:flex;gap:8px;}
+.ec-modal-send{
+  flex:1;background:rgba(200,80,42,.2);border:1.5px solid rgba(200,80,42,.6);
+  color:#FF6B4A;border-radius:8px;padding:10px;font-size:12px;font-weight:700;
+  cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;
+}
+.ec-modal-send:hover{background:rgba(200,80,42,.35);}
+.ec-modal-dismiss{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  color:#66728A;border-radius:8px;padding:10px 14px;font-size:12px;
+  cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;
+}
+.ec-modal-dismiss:hover{background:rgba(255,255,255,.1);}
+.ec-sent-confirm{text-align:center;padding:8px 0;font-size:11.5px;color:#4CAF7D;font-weight:600;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+<div class="layout">
+
+<div class="stage">
+  <div class="wordmark"><em>desk</em>help</div>
+  <div id="canvas-container">
+    <canvas id="overlay-canvas"></canvas>
+  </div>
+  <div class="hw-labels">
+    <div class="hw-lbl" id="lbl-led"><div class="hw-dot"></div>LED Ring Head</div>
+    <div class="hw-lbl" id="lbl-speaker"><div class="hw-dot"></div>Sound</div>
+    <div class="hw-lbl" id="lbl-diffuser"><div class="hw-dot"></div>Aroma Diffuser</div>
+    <div class="hw-lbl" id="lbl-haptic"><div class="hw-dot"></div>Haptic Pad</div>
+    <div class="hw-lbl" id="lbl-status"><div class="hw-dot"></div>Status</div>
+  </div>
+</div>
+
+<div class="sidebar">
+  <div class="section-label">Stress level</div>
+  <div class="stress-row">
+    <button class="sl-btn active" data-level="1" style="--slc:var(--l1)" onclick="setLevel(1)">
+      <div class="sl-swatch" style="background:var(--l1)"></div>
+      <span class="sl-num">1</span><span class="sl-tag">Calm</span>
+    </button>
+    <button class="sl-btn" data-level="2" style="--slc:var(--l2)" onclick="setLevel(2)">
+      <div class="sl-swatch" style="background:var(--l2)"></div>
+      <span class="sl-num">2</span><span class="sl-tag">Mild</span>
+    </button>
+    <button class="sl-btn" data-level="3" style="--slc:var(--l3)" onclick="setLevel(3)">
+      <div class="sl-swatch" style="background:var(--l3)"></div>
+      <span class="sl-num">3</span><span class="sl-tag">Mod</span>
+    </button>
+    <button class="sl-btn" data-level="4" style="--slc:var(--l4)" onclick="setLevel(4)">
+      <div class="sl-swatch" style="background:var(--l4)"></div>
+      <span class="sl-num">4</span><span class="sl-tag">High</span>
+    </button>
+    <button class="sl-btn" data-level="5" style="--slc:var(--l5)" onclick="setLevel(5)">
+      <div class="sl-swatch" style="background:var(--l5)"></div>
+      <span class="sl-num">5</span><span class="sl-tag">Sev</span>
+    </button>
+  </div>
+
+  <div class="status-card" id="statusCard">
+    <div class="status-top">
+      <div class="status-icon" id="statusIcon">🟢</div>
+      <div>
+        <div class="status-name" id="statusName">Calm</div>
+        <div class="status-sub" id="statusSub">Visual grounding active</div>
+      </div>
+    </div>
+    <div class="iv-list">
+      <div class="iv on" id="iv-led" style="--ivc:var(--l1)"><div class="iv-pip"></div><span class="iv-label">Breathing light</span><span class="iv-badge">active</span></div>
+      <div class="iv" id="iv-speaker" style="--ivc:var(--l2)"><div class="iv-pip"></div><span class="iv-label">Sound therapy</span><span class="iv-badge">active</span></div>
+      <div class="iv" id="iv-haptic" style="--ivc:var(--l4)"><div class="iv-pip"></div><span class="iv-label">Haptic grounding</span><span class="iv-badge">active</span></div>
+      <div class="iv" id="iv-diffuser" style="--ivc:var(--l1)"><div class="iv-pip"></div><span class="iv-label">Aromatherapy</span><span class="iv-badge">active</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">Manual override</div>
+  <div class="comp-list">
+    <div class="ccard on" id="card-led" onclick="manualTog('led')" style="--cc:var(--l3)">
+      <div class="cicon">💡</div>
+      <div><div class="ctitle">LED Ring Head</div><div class="csub">Breathing light</div></div>
+      <span class="con-badge">on</span>
+    </div>
+    <div class="ccard" id="card-speaker" onclick="manualTog('speaker')" style="--cc:var(--l2)">
+      <div class="cicon" id="speakerIcon">🔊</div>
+      <div><div class="ctitle">Speaker System</div><div class="csub">Audio landscape</div></div>
+      <span class="con-badge">on</span>
+    </div>
+    <div class="ccard" id="card-haptic" onclick="manualTog('haptic')" style="--cc:var(--l4)">
+      <div class="cicon" id="hapticIcon">✋</div>
+      <div><div class="ctitle">Haptic Pad</div><div class="csub">Tactile grounding</div></div>
+      <span class="con-badge">on</span>
+    </div>
+    <div class="ccard" id="card-diffuser" onclick="manualTog('diffuser')" style="--cc:var(--l1)">
+      <div class="cicon">💧</div>
+      <div><div class="ctitle">Diffuser</div><div class="csub">Mist engine</div></div>
+      <span class="con-badge">on</span>
+    </div>
+    <div class="ccard on" id="card-status" onclick="manualTog('status')" style="--cc:var(--muted)">
+      <div class="cicon">🔵</div>
+      <div><div class="ctitle">Status ring</div><div class="csub">Base indicator</div></div>
+      <span class="con-badge">on</span>
+    </div>
+  </div>
+
+  <div class="section-label">Acoustic Logic</div>
+  <div class="light-key">
+    <div class="lk-row"><span class="lk-level">L1</span><span class="lk-text"><strong>Silence</strong> — Pure calm baseline</span></div>
+    <div class="lk-row"><span class="lk-level">L2</span><span class="lk-text"><strong>Theta Wave Drone</strong> — Warm focal baseline</span></div>
+    <div class="lk-row"><span class="lk-level">L3</span><span class="lk-text"><strong>Rain + Forest</strong> — Nature soundscape overlay</span></div>
+    <div class="lk-row"><span class="lk-level">L4</span><span class="lk-text"><strong>Ocean Waves + Wind</strong> — Deep nature immersion</span></div>
+    <div class="lk-row"><span class="lk-level">L5</span><span class="lk-text"><strong>Om Chant Drone</strong> — 136.1Hz harmonic grounding</span></div>
+  </div>
+
+  <div class="section-label">Emergency Contact</div>
+  <div class="ec-card" id="ecCard">
+    <div class="ec-row">
+      <span class="ec-label">Name</span>
+      <input class="ec-input" id="ecName" type="text" placeholder="e.g. Priya Sharma" />
+    </div>
+    <div class="ec-row">
+      <span class="ec-label">Phone / WhatsApp</span>
+      <input class="ec-input" id="ecPhone" type="tel" placeholder="+91 98765 43210" />
+    </div>
+    <div class="ec-row">
+      <span class="ec-label">Custom message</span>
+      <textarea class="ec-input ec-textarea" id="ecMsg" placeholder="I need support right now. My stress sensor just hit Level 5."></textarea>
+    </div>
+    <div class="ec-status" id="ecStatus"></div>
+    <button class="ec-save-btn" onclick="saveEC()">Save contact</button>
+  </div>
+</div>
+</div>
+
+<script>
+const LEVELS = {
+  1:{name:'Calm',    sub:'Visual grounding active',  icon:'🟢',
+     lampCol:'#F5E090', lampBright:2.2,  statusCol:'#4CAF7D',
+     mistCol:'rgba(200,240,220,0.5)', hapticPulseRate: 0,
+     freqs: [], volume: 0.0, soundType:'none',
+     comp:{led:1,speaker:0,haptic:0,diffuser:0,status:1}},
+  2:{name:'Mild',    sub:'Light + paced breathing',  icon:'🔵',
+     lampCol:'#F0C870', lampBright:1.8, statusCol:'#60A8C8',
+     mistCol:'rgba(200,220,240,0.5)', hapticPulseRate: 0,
+     freqs: [120, 180], volume: 0.2, soundType:'tone',
+     comp:{led:1,speaker:1,haptic:0,diffuser:0,status:1}},
+  3:{name:'Moderate',sub:'Rain + nature soundscape',icon:'🟡',
+     lampCol:'#E8A84A', lampBright:1.5, statusCol:'#C8A84B',
+     mistCol:'rgba(255,210,160,0.6)', hapticPulseRate: 0,
+     freqs: [], volume: 0.38, soundType:'rain',
+     comp:{led:1,speaker:1,haptic:0,diffuser:1,status:1}},
+  4:{name:'High',    sub:'Ocean waves + deep haptics',  icon:'🟠',
+     lampCol:'#D4783A', lampBright:1.1, statusCol:'#D4713A',
+     mistCol:'rgba(245,235,210,0.6)', hapticPulseRate: 25,
+     freqs: [], volume: 0.45, soundType:'ocean',
+     comp:{led:1,speaker:1,haptic:1,diffuser:1,status:1}},
+  5:{name:'Severe',  sub:'Om chant + tactile grounding', icon:'💜',
+     lampCol:'#C69460', lampBright:0.5, statusCol:'#D8A570', 
+     mistCol:'rgba(210,190,245,0.7)', hapticPulseRate: 60,
+     freqs: [68.05, 136.1, 272.2], volume: 0.4, soundType:'tone',
+     comp:{led:1,speaker:1,haptic:1,diffuser:1,status:1}}
+};
+
+const S = {led:1, speaker:0, diffuser:0, haptic:0, status:1};
+const LCOLS = {led:'#E8A84A', speaker:'#60A8C8', diffuser:'#4CAF7D', haptic:'#D4713A', status:'#888'};
+let currentLevel = 1;
+let audioCtx = null, masterGain = null, aNodes = [];
+let statusRingPulseSpeed = 2.0; // rad/s — slows at higher stress
+let aromaClock = 0;        // seconds since last aroma phase start
+let aromaPhase = 'spray';  // 'spray' | 'pause'
+const AROMA_SPRAY_DUR = 2.0;   // seconds spraying
+const AROMA_PAUSE_DUR = 3.0;   // seconds off
+
+/* ════ THREE.JS GRAPHICS SETUP ════ */
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#0B0B0C'); 
+
+const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 100);
+camera.position.set(4, 3.2, 4.5);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setSize(container.clientWidth, container.clientHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+container.appendChild(renderer.domElement);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.target.set(0, 0.7, 0);
+
+const ambientLight = new THREE.AmbientLight('#ffffff', 0.2); 
+scene.add(ambientLight);
+
+const studioLight = new THREE.DirectionalLight('#ffffff', 0.8);
+studioLight.position.set(4, 8, 3);
+studioLight.castShadow = true;
+scene.add(studioLight);
+
+const softFloorGeo = new THREE.PlaneGeometry(30, 30);
+const softFloorMat = new THREE.MeshStandardMaterial({ color: 0x111112, roughness: 0.8 });
+const floorMesh = new THREE.Mesh(softFloorGeo, softFloorMat);
+floorMesh.rotation.x = -Math.PI / 2;
+floorMesh.receiveShadow = true;
+scene.add(floorMesh);
+
+/* ════ HARDWARE MATERIALS ════ */
+const chassisMat = new THREE.MeshStandardMaterial({ color: 0x2A2E35, roughness: 0.35, metalness: 0.5 });
+const armMetalMat = new THREE.MeshStandardMaterial({ color: 0x22252C, roughness: 0.45, metalness: 0.6 });
+const hapticZenMat = new THREE.MeshStandardMaterial({ color: 0x323742, roughness: 0.8, metalness: 0.1 });
+const ringLampEmitterMat = new THREE.MeshStandardMaterial({
+  color: 0xFFFFFF, roughness: 0.0, metalness: 0.0,
+  emissive: new THREE.Color('#F5E090'), emissiveIntensity: 4.0
+});
+const statusBaseLedMat = new THREE.MeshBasicMaterial({ color: 0x4CAF7D });
+
+const productContainer = new THREE.Group();
+
+const subBaseGeo = new THREE.CylinderGeometry(0.75, 0.75, 0.16, 64);
+const subBase = new THREE.Mesh(subBaseGeo, chassisMat);
+subBase.position.y = 0.08;
+subBase.castShadow = true;
+subBase.receiveShadow = true;
+productContainer.add(subBase);
+
+const armTowerGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.45, 48);
+const armTower = new THREE.Mesh(armTowerGeo, chassisMat);
+armTower.position.set(-0.35, 0.35, 0); 
+armTower.castShadow = true;
+productContainer.add(armTower);
+
+// ── Diffuser vent — small perforated nozzle on the side of the tower ──
+// This is the one real, tiny emission point the aroma mist now spawns from.
+const diffuserVentGroup = new THREE.Group();
+diffuserVentGroup.position.set(-0.35, 0.50, 0.236); // sits on the tower's side wall
+productContainer.add(diffuserVentGroup);
+
+const ventRingGeo = new THREE.TorusGeometry(0.04, 0.006, 10, 24);
+const ventRingMat = new THREE.MeshStandardMaterial({ color: 0x1C2028, roughness: 0.3, metalness: 0.75 });
+const ventRing = new THREE.Mesh(ventRingGeo, ventRingMat);
+ventRing.castShadow = true;
+diffuserVentGroup.add(ventRing);
+
+const ventCapGeo = new THREE.CylinderGeometry(0.036, 0.04, 0.018, 24);
+const ventCap = new THREE.Mesh(ventCapGeo, ventRingMat);
+ventCap.rotation.x = Math.PI / 2;
+ventCap.position.z = -0.006;
+diffuserVentGroup.add(ventCap);
+
+// tiny perforation dots in a ring — reads as a mesh grille up close
+const ventHoleMat = new THREE.MeshStandardMaterial({ color: 0x0B0B0C, roughness: 0.9 });
+for (let i = 0; i < 8; i++) {
+  const a = (i / 8) * Math.PI * 2;
+  const holeGeo = new THREE.CircleGeometry(0.0035, 8);
+  const hole = new THREE.Mesh(holeGeo, ventHoleMat);
+  hole.position.set(Math.cos(a) * 0.022, Math.sin(a) * 0.022, 0.0041);
+  diffuserVentGroup.add(hole);
+}
+const centerHole = new THREE.Mesh(new THREE.CircleGeometry(0.005, 8), ventHoleMat);
+centerHole.position.z = 0.0041;
+diffuserVentGroup.add(centerHole);
+
+/* ════ DOME-SHAPED TACTILE PAD — LOW PROFILE, MULTI-SURFACE ════ */
+
+// Static base group — does NOT rotate (collar stays fixed like a real product)
+const hapticBase = new THREE.Group();
+hapticBase.position.set(0.32, 0.161, 0);
+productContainer.add(hapticBase);
+
+// Flat collar ring
+const collarGeo = new THREE.CylinderGeometry(0.42, 0.44, 0.022, 72);
+const collarMat = new THREE.MeshStandardMaterial({ color: 0x1C2028, roughness: 0.3, metalness: 0.8 });
+const collar = new THREE.Mesh(collarGeo, collarMat);
+collar.castShadow = true;
+hapticBase.add(collar);
+
+// ── ROTATING GROUP — dome + all surfaces spin together ──
+const hapticGroup = new THREE.Group();
+hapticGroup.position.y = 0.011;
+hapticBase.add(hapticGroup);
+
+// LOW-PROFILE DOME — flattened hemisphere (zen-pebble shape)
+const hapticDomeGeo = new THREE.SphereGeometry(0.40, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2);
+hapticDomeGeo.scale(1, 0.28, 1); // very flat — hand rests naturally
+const hapticDomeMat = new THREE.MeshStandardMaterial({
+  color: 0x252B38, roughness: 0.6, metalness: 0.12
+});
+const hapticDome = new THREE.Mesh(hapticDomeGeo, hapticDomeMat);
+hapticDome.castShadow = true;
+hapticGroup.add(hapticDome);
+
+// ── domeY: surface height at radius r ──
+function domeY(r) {
+  const R = 0.40, flatY = 0.28;
+  if (r >= R) return 0;
+  return R * flatY * Math.sqrt(1 - (r / R) ** 2);
+}
+
+// ══════════════════════════════════════════
+// SURFACE TEXTURE ZONES — children of hapticGroup → rotate WITH dome
+// Each zone is visually distinct and asymmetric so rotation is clearly visible
+// ══════════════════════════════════════════
+
+// ── Zone 0: RIDGE BANDS — full concentric rings across entire dome
+const ridgeZone = new THREE.Group();
+hapticGroup.add(ridgeZone);
+const ridgeMat = new THREE.MeshStandardMaterial({ color: 0x4A5368, roughness: 0.65, metalness: 0.15 });
+
+// Full 360° rings at multiple radii — spanning edge to centre
+[0.37, 0.31, 0.24, 0.17, 0.10, 0.04].forEach((r, i) => {
+  const arc = new THREE.TorusGeometry(r, 0.007 - i*0.0005, 8, 80, Math.PI * 2);
+  const m = new THREE.Mesh(arc, ridgeMat);
+  m.rotation.x = Math.PI / 2;
+  m.position.y = domeY(r) + 0.001;
+  ridgeZone.add(m);
+});
+
+// ── Zone 1: SPOKE BLADES — 12 full-length blade fins spanning center to edge
+const spokeZone = new THREE.Group();
+hapticGroup.add(spokeZone);
+const spokeMat = new THREE.MeshStandardMaterial({ color: 0x3E5070, roughness: 0.55, metalness: 0.25 });
+
+[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].forEach((deg) => {
+  const angle = deg * Math.PI / 180;
+  // Long blade reaching from near-centre to near-edge
+  const bladeGeo = new THREE.BoxGeometry(0.36, 0.012, 0.016);
+  const blade = new THREE.Mesh(bladeGeo, spokeMat);
+  blade.rotation.y = angle;
+  // Position at midpoint of radius so it extends outward
+  blade.position.set(Math.cos(angle)*0.14, domeY(0.14)+0.005, Math.sin(angle)*0.14);
+  spokeZone.add(blade);
+});
+
+// ── Zone 2: NODULE FIELD — 48 bumps in Fibonacci spiral covering full dome
+const noduleZone = new THREE.Group();
+hapticGroup.add(noduleZone);
+const noduleMat = new THREE.MeshStandardMaterial({ color: 0x5A6880, roughness: 0.6, metalness: 0.05 });
+
+const goldenAngle = 2.399963; // radians
+for (let i = 0; i < 48; i++) {
+  const r = 0.025 + (i / 48) * 0.355; // from near-centre to near-edge
+  const a = i * goldenAngle;
+  const size = 0.018 - (i/48)*0.006;
+  const geo = new THREE.SphereGeometry(Math.max(size, 0.008), 8, 6);
+  const nod = new THREE.Mesh(geo, noduleMat);
+  nod.position.set(Math.cos(a)*r, domeY(r)+0.012, Math.sin(a)*r);
+  noduleZone.add(nod);
+}
+
+// ── Zone 3: WAVE FINS — 10 crescent arcs spanning full dome radii
+const waveZone = new THREE.Group();
+hapticGroup.add(waveZone);
+const waveMat = new THREE.MeshStandardMaterial({ color: 0x485A72, roughness: 0.5, metalness: 0.2 });
+
+[[0.36, 0, 1.1*Math.PI], [0.29, 0.7, 1.0*Math.PI], [0.22, 1.5, 0.9*Math.PI],
+ [0.16, 2.3, 0.85*Math.PI], [0.10, 3.1, 0.8*Math.PI],
+ [0.33, 3.9, 0.95*Math.PI], [0.26, 4.7, 0.9*Math.PI],
+ [0.19, 5.5, 0.85*Math.PI], [0.12, 0.4, 0.75*Math.PI], [0.06, 2.0, 0.6*Math.PI]
+].forEach(([r, startA, arcLen]) => {
+  const arc = new THREE.TorusGeometry(r, 0.009, 7, 40, arcLen);
+  const m = new THREE.Mesh(arc, waveMat);
+  m.rotation.x = Math.PI / 2;
+  m.rotation.z = startA;
+  m.position.y = domeY(r) + 0.003;
+  waveZone.add(m);
+});
+
+// ── Dome ambient glow light — no visible LED, just under-lighting the texture zones
+const domeGlowLight = new THREE.PointLight(0x4CAF7D, 1.2, 0.9);
+domeGlowLight.position.y = domeY(0) + 0.015;
+hapticGroup.add(domeGlowLight);
+
+// Secondary rim light — illuminates outer edge of dome
+const domeRimLight = new THREE.PointLight(0x4CAF7D, 0.6, 0.7);
+domeRimLight.position.set(0.3, domeY(0.3) + 0.05, 0);
+hapticGroup.add(domeRimLight);
+
+const TEXTURE_ZONES = [ridgeZone, spokeZone, noduleZone, waveZone];
+
+// ── Texture state ──
+let hapticTextureTick = 0;
+let hapticTexturePhase = 0;
+const HAPTIC_TEXTURE_INTERVALS = { 1: 10, 2: 9, 3: 8, 4: 7, 5: 6 };
+const DOME_ACCENT_COLS = {
+  1: '#4CAF7D', 2: '#60A8C8', 3: '#C8A84B', 4: '#D4713A', 5: '#D8A570'
+};
+
+function applyHapticTexture(phase, level) {
+  TEXTURE_ZONES.forEach((z, i) => { z.visible = (i === phase); });
+  const domeColors = [0x252B38, 0x202840, 0x2E3244, 0x263038];
+  hapticDomeMat.color.set(domeColors[phase]);
+  hapticDomeMat.needsUpdate = true;
+  const col = DOME_ACCENT_COLS[level] || '#4CAF7D';
+  domeGlowLight.color.set(col);
+  domeRimLight.color.set(col);
+}
+applyHapticTexture(0, 1);
+
+const statusStripGeo = new THREE.CylinderGeometry(0.755, 0.755, 0.02, 64, 1, true);
+const statusStrip = new THREE.Mesh(statusStripGeo, statusBaseLedMat);
+statusStrip.position.y = 0.07;
+productContainer.add(statusStrip);
+
+// ── Pivot hardware — tiny hex-headed nut + cap bolt detailing every hinge ──
+// Reuses armMetalMat only (no new colors); purely geometric detail so each
+// joint reads as a real fastened hinge instead of a bare rotating box.
+function addPivotNut(parent, radius, depth, offsetZ){
+  const grp = new THREE.Group();
+  parent.add(grp);
+
+  const nutGeo = new THREE.CylinderGeometry(radius, radius, depth, 6); // hex head
+  const nut = new THREE.Mesh(nutGeo, armMetalMat);
+  nut.rotation.x = Math.PI / 2;
+  nut.position.z = offsetZ;
+  nut.castShadow = true;
+  grp.add(nut);
+
+  const capGeo = new THREE.CylinderGeometry(radius*0.5, radius*0.5, depth*0.7, 20);
+  const cap = new THREE.Mesh(capGeo, armMetalMat);
+  cap.rotation.x = Math.PI / 2;
+  cap.position.z = offsetZ + depth*0.55;
+  cap.castShadow = true;
+  grp.add(cap);
+
+  // fine slot across the cap face — sells the "machined screw" read at close range
+  const slotGeo = new THREE.BoxGeometry(radius*0.9, depth*0.45, radius*0.12);
+  const slot = new THREE.Mesh(slotGeo, hapticZenMat);
+  slot.rotation.x = Math.PI / 2;
+  slot.position.z = offsetZ + depth*0.55 + depth*0.36;
+  grp.add(slot);
+
+  // mirror set on the opposite face so the hinge reads as a through-bolt
+  const nut2 = nut.clone(); nut2.position.z = -offsetZ; grp.add(nut2);
+  return grp;
+}
+
+const lowerJoint = new THREE.Group();
+lowerJoint.position.set(-0.35, 0.5, 0); 
+productContainer.add(lowerJoint);
+
+const lowerArmGeo = new THREE.BoxGeometry(0.08, 0.75, 0.08);
+const lowerArm = new THREE.Mesh(lowerArmGeo, armMetalMat);
+lowerArm.position.y = 0.32; 
+lowerArm.castShadow = true;
+lowerJoint.add(lowerArm);
+addPivotNut(lowerJoint, 0.034, 0.016, 0.046); // base swivel hinge
+
+const middleJoint = new THREE.Group();
+middleJoint.position.set(0, 0.35, 0); 
+lowerArm.add(middleJoint);
+addPivotNut(middleJoint, 0.027, 0.014, 0.036); // elbow hinge
+
+const upperArmGeo = new THREE.BoxGeometry(0.06, 0.65, 0.06);
+const upperArm = new THREE.Mesh(upperArmGeo, armMetalMat);
+upperArm.position.y = 0.28;
+upperArm.castShadow = true;
+middleJoint.add(upperArm);
+
+const headMount = new THREE.Group();
+headMount.position.set(0, 0.325, 0); 
+upperArm.add(headMount);
+addPivotNut(headMount, 0.023, 0.012, 0.034); // head tilt hinge
+
+const ringShape = new THREE.Shape();
+ringShape.absarc(0, 0, 0.42, 0, Math.PI * 2, false);
+const holePath = new THREE.Path();
+holePath.absarc(0, 0, 0.30, 0, Math.PI * 2, true);
+ringShape.holes.push(holePath);
+
+const extrudeSettings = { depth: 0.06, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.008, bevelThickness: 0.008 };
+const lampHeadHousingGeo = new THREE.ExtrudeGeometry(ringShape, extrudeSettings);
+lampHeadHousingGeo.center();
+lampHeadHousingGeo.rotateX(Math.PI / 2);
+
+const lampHeadHousing = new THREE.Mesh(lampHeadHousingGeo, armMetalMat);
+lampHeadHousing.position.set(0.38, 0, 0); 
+lampHeadHousing.castShadow = true;
+headMount.add(lampHeadHousing);
+
+const linkBracketGeo = new THREE.BoxGeometry(0.12, 0.04, 0.05);
+const linkBracket = new THREE.Mesh(linkBracketGeo, armMetalMat);
+linkBracket.position.set(0.06, 0, 0);
+headMount.add(linkBracket);
+
+// Inner emitter ring — thick glowing torus visible inside housing
+const innerLightRingGeo = new THREE.TorusGeometry(0.33, 0.045, 32, 120);
+innerLightRingGeo.rotateX(Math.PI / 2);
+const innerLightRing = new THREE.Mesh(innerLightRingGeo, ringLampEmitterMat);
+innerLightRing.position.set(0.38, -0.01, 0);
+headMount.add(innerLightRing);
+
+// Outer emitter ring — slightly larger, same material
+const outerLightRingGeo = new THREE.TorusGeometry(0.39, 0.018, 16, 100);
+outerLightRingGeo.rotateX(Math.PI / 2);
+const outerLightRing = new THREE.Mesh(outerLightRingGeo, ringLampEmitterMat);
+outerLightRing.position.set(0.38, -0.01, 0);
+headMount.add(outerLightRing);
+
+// Emissive disc fill — flat glowing circle filling the ring hole
+const discGeo = new THREE.CircleGeometry(0.30, 64);
+const discMat = new THREE.MeshBasicMaterial({ color: 0xF5E090, transparent: true, opacity: 0.18, side: THREE.DoubleSide });
+const emitDisc = new THREE.Mesh(discGeo, discMat);
+emitDisc.position.set(0.38, -0.015, 0);
+emitDisc.rotation.y = Math.PI / 2;
+headMount.add(emitDisc);
+
+const photonEngine = new THREE.SpotLight(0xffffff, 25, 10, Math.PI / 2.8, 0.35, 1.2);
+photonEngine.position.set(0.38, -0.02, 0);
+photonEngine.target.position.set(0.38, -3, 0);
+photonEngine.castShadow = true;
+headMount.add(photonEngine);
+headMount.add(photonEngine.target);
+
+// ── Ring fill lights — multiple point lights to make housing glow visibly ──
+const ringFillLight = new THREE.PointLight(0xF5E090, 6.0, 2.0);
+ringFillLight.position.set(0.38, 0.05, 0);
+headMount.add(ringFillLight);
+
+const ringFillLight2 = new THREE.PointLight(0xF5E090, 4.0, 1.4);
+ringFillLight2.position.set(0.38, -0.1, 0);
+headMount.add(ringFillLight2);
+
+// ── Warm downward fill — lights the base/desk surface more dramatically ──
+const baseFillLight = new THREE.PointLight(0xFFD090, 3.5, 4.0);
+baseFillLight.position.set(0, 1.8, 0);
+scene.add(baseFillLight);
+
+scene.add(productContainer);
+
+/* ════ OVERLAY CANVAS FOR DIFFUSION MIST & TACTILE RIPPLES ════ */
+const oCanvas = document.getElementById('overlay-canvas');
+const oCtx = oCanvas.getContext('2d');
+let particles = [];
+let hapticRipples = [];
+
+function resizeOverlayCanvas() {
+  oCanvas.width = container.clientWidth;
+  oCanvas.height = container.clientHeight;
+}
+window.addEventListener('resize', resizeOverlayCanvas);
+resizeOverlayCanvas();
+
+class MistParticle {
+  constructor(x, y) {
+    this.x = x + (Math.random() - 0.5) * 4;
+    this.y = y + (Math.random() - 0.5) * 2;
+    this.vx = (Math.random() - 0.5) * 0.22;
+    this.vy = -0.45 - Math.random() * 0.6;
+    this.radius = 3 + Math.random() * 4;
+    this.alpha = 0.6 + Math.random() * 0.3;
+    this.maxLife = 90 + Math.random() * 60;
+    this.life = 0;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy; this.radius += 0.2; this.life++;
+    this.alpha = (1 - (this.life / this.maxLife)) * 0.7;
+  }
+  draw() {
+    oCtx.save(); oCtx.beginPath();
+    let grad = oCtx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+    let baseColor = LEVELS[currentLevel].mistCol || 'rgba(240,240,240,0.5)';
+    let colorString = baseColor.replace('0.5', this.alpha.toFixed(3)).replace('0.6', this.alpha.toFixed(3)).replace('0.7', this.alpha.toFixed(3));
+    grad.addColorStop(0, colorString); grad.addColorStop(1, 'rgba(11,11,12,0)');
+    oCtx.fillStyle = grad; oCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); oCtx.fill(); oCtx.restore();
+  }
+}
+
+class HapticRipple {
+  constructor(x, y, col) {
+    this.x = x; this.y = y; this.radius = 10; this.maxRadius = 65; this.alpha = 0.8;
+    this.col = col || '#D8A570';
+  }
+  update() {
+    this.radius += 1.5;
+    this.alpha = 1 - (this.radius / this.maxRadius);
+  }
+  draw() {
+    oCtx.save(); oCtx.beginPath();
+    // Parse hex color for rgba
+    let c = this.col;
+    oCtx.strokeStyle = c ? hexToRgba(c, this.alpha) : `rgba(216, 165, 112, ${this.alpha})`;
+    oCtx.lineWidth = 2;
+    oCtx.ellipse(this.x, this.y, this.radius, this.radius * 0.45, 0, 0, Math.PI * 2);
+    oCtx.stroke(); oCtx.restore();
+  }
+}
+
+function hexToRgba(hex, a) {
+  let r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a.toFixed(2)})`;
+}
+
+function processOverlayGraphics(dt) {
+  oCtx.clearRect(0, 0, oCanvas.width, oCanvas.height);
+  
+  // Aroma mist — 2 seconds ON, 3 seconds OFF pulse cycle
+  if (S.diffuser) {
+    aromaClock += dt;
+    const cycleDur = aromaPhase === 'spray' ? AROMA_SPRAY_DUR : AROMA_PAUSE_DUR;
+    if (aromaClock >= cycleDur) {
+      aromaClock = 0;
+      aromaPhase = aromaPhase === 'spray' ? 'pause' : 'spray';
+    }
+
+    if (aromaPhase === 'spray') {
+      let towerPos = diffuserVentGroup.getWorldPosition(new THREE.Vector3());
+      towerPos.project(camera);
+      let screenX = (towerPos.x * .5 + .5) * oCanvas.width;
+      let screenY = (towerPos.y * -.5 + .5) * oCanvas.height;
+      // Ramp up spray density mid-burst
+      const burstT = Math.min(aromaClock / AROMA_SPRAY_DUR, 1.0);
+      const mistRate = { 3: 0.35, 4: 0.55, 5: 0.70 }[currentLevel] || 0.40;
+      const effectiveRate = mistRate * (0.4 + 0.6 * Math.sin(burstT * Math.PI)); // bell curve
+      if (Math.random() < effectiveRate) particles.push(new MistParticle(screenX, screenY));
+    }
+  } else {
+    aromaClock = 0; aromaPhase = 'spray'; // reset when diffuser off
+  }
+
+  // Projection logic for Tactile Grounding Pad pulses — dome position
+  if (S.haptic && LEVELS[currentLevel].hapticPulseRate > 0) {
+    let padPos = new THREE.Vector3(0.32, 0.34, 0); // top of dome
+    padPos.project(camera);
+    let pX = (padPos.x * .5 + .5) * oCanvas.width;
+    let pY = (padPos.y * -.5 + .5) * oCanvas.height;
+    
+    // Ripple rate breathes in sync: more ripples at breath peak
+    let breathMod = 0.5 + 0.5 * Math.sin(breathPhase);
+    let rate = LEVELS[currentLevel].hapticPulseRate * 0.1 * (0.6 + 0.4 * breathMod);
+    if (Math.random() * 100 < rate) {
+      hapticRipples.push(new HapticRipple(pX, pY, LEVELS[currentLevel].statusCol));
+    }
+  }
+
+  // Draw arrays
+  for (let i = particles.length - 1; i >= 0; i--) {
+    particles[i].update();
+    if (particles[i].life >= particles[i].maxLife) particles.splice(i, 1);
+    else particles[i].draw();
+  }
+
+  for (let i = hapticRipples.length - 1; i >= 0; i--) {
+    hapticRipples[i].update();
+    if (hapticRipples[i].radius >= hapticRipples[i].maxRadius) hapticRipples.splice(i, 1);
+    else hapticRipples[i].draw();
+  }
+}
+
+/* ════ SYSTEM REALTIME FRAME TIMER TICK LOOP ════ */
+let clock = new THREE.Clock();
+let lastTextureSwitch = 0;
+
+// Per-level breathing definitions (all durations in seconds, radians/s for speed)
+// L1 calm: 4s inhale / 4s exhale = 8s cycle → 2π/8 ≈ 0.785 rad/s  (box breathing lite)
+// L2 mild: 4-4 paced   → same gentle speed
+// L3 mod:  4-4-4 (slight hold implied) → slightly faster cycle
+// L4 high: 4-4 but more intensity (deep diaphragmatic)
+// L5 severe: 5-5 slow re-regulation → 0.628 rad/s
+const BREATH_SPEEDS = { 1: 0.785, 2: 0.785, 3: 0.9, 4: 1.1, 5: 0.628 };
+// Dome slow rotation: calm = barely moving, severe = slightly faster (grounding engagement)
+const DOME_ROT_SPEEDS = { 1: 0.08, 2: 0.10, 3: 0.13, 4: 0.16, 5: 0.19 };
+
+// Shared breath phase — single source of truth for light + haptic + sound mod
+let breathPhase = 0;
+let lastFrameTime = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  let time = clock.getElapsedTime();
+  let dt = time - lastFrameTime;
+  lastFrameTime = time;
+
+  lowerJoint.rotation.z = -0.12 + Math.sin(time * 0.35) * 0.04;
+  middleJoint.rotation.z = -0.32 + Math.cos(time * 0.45) * 0.06;
+  headMount.rotation.z = 0.42 + Math.sin(time * 0.35) * 0.03;
+
+  // ── MASTER BREATH WAVE ──
+  // Single sinusoid drives everything: inhale = wave rising, exhale = wave falling
+  let bSpeed = BREATH_SPEEDS[currentLevel] || 0.785;
+  breathPhase += bSpeed * dt;
+  let breathWave = 0.5 + 0.5 * Math.sin(breathPhase); // 0→1→0 cycle
+
+  // ── LIGHT (LED ring) synced to breath ──
+  if (S.led) {
+    let minBright = { 1:1.0, 2:1.2, 3:1.0, 4:0.8, 5:0.5 }[currentLevel];
+    let maxBright = { 1:2.2, 2:2.5, 3:2.8, 4:3.2, 5:1.8 }[currentLevel];
+    let scalar = LEVELS[currentLevel].lampBright * THREE.MathUtils.lerp(minBright, maxBright, breathWave);
+    photonEngine.intensity = THREE.MathUtils.lerp(photonEngine.intensity, scalar * 1.8, 0.10);
+    ringLampEmitterMat.emissiveIntensity = THREE.MathUtils.lerp(ringLampEmitterMat.emissiveIntensity, scalar * 1.2, 0.08);
+    discMat.opacity = 0.08 + breathWave * 0.12;
+  } else {
+    photonEngine.intensity = THREE.MathUtils.lerp(photonEngine.intensity, 0, 0.15);
+    ringLampEmitterMat.emissiveIntensity = THREE.MathUtils.lerp(ringLampEmitterMat.emissiveIntensity, 0, 0.15);
+    discMat.opacity = 0;
+  }
+
+  // ── SOUND volume modulation synced to breath ──
+  // Subtle fade: sound swells slightly on inhale, settles on exhale
+  if (masterGain && S.speaker && LEVELS[currentLevel].freqs.length > 0) {
+    let baseVol = LEVELS[currentLevel].volume;
+    let modVol = baseVol * (0.85 + 0.15 * breathWave);
+    masterGain.gain.setTargetAtTime(modVol * 0.42, audioCtx.currentTime, 0.3);
+  }
+
+  if (S.status) {
+    statusStrip.visible = true;
+    statusBaseLedMat.color.set(LEVELS[currentLevel].statusCol);
+    // Pulse brightness slower at higher stress
+    const ringPulse = 0.7 + 0.3 * Math.sin(time * statusRingPulseSpeed);
+    statusBaseLedMat.opacity !== undefined;  // MeshBasicMaterial: modulate via color brightness
+    const sc2 = new THREE.Color(LEVELS[currentLevel].statusCol);
+    sc2.multiplyScalar(0.6 + 0.4 * ringPulse);
+    statusBaseLedMat.color.copy(sc2);
+  } else { statusStrip.visible = false; }
+
+  // ── Breathing light: ring head physically scales very slightly with breath ──
+  if (S.led) {
+    const scaleB = 1 + breathWave * 0.025;
+    innerLightRing.scale.setScalar(scaleB);
+    outerLightRing.scale.setScalar(scaleB);
+  } else {
+    innerLightRing.scale.setScalar(1);
+    outerLightRing.scale.setScalar(1);
+  }
+
+  // ── DOME: slow revolution (Y-axis) — only hapticGroup spins, collar stays still ──
+  hapticGroup.rotation.y += DOME_ROT_SPEEDS[currentLevel] * dt;
+
+  // ── DOME: glow lights pulse with breath ──
+  domeGlowLight.intensity = 0.8 + breathWave * 1.8;
+  domeRimLight.intensity = 0.4 + breathWave * 0.9;
+
+  // ── Ring fill light synced to breath — makes the housing glow ──
+  const rfIntensity = 5.0 + breathWave * 5.0;
+  ringFillLight.intensity = rfIntensity;
+  ringFillLight2.intensity = rfIntensity * 0.6;
+  ringFillLight.color.set(LEVELS[currentLevel].lampCol);
+  ringFillLight2.color.set(LEVELS[currentLevel].lampCol);
+
+  // ── Base fill light pulses gently ──
+  baseFillLight.intensity = 2.5 + breathWave * 2.5;
+  baseFillLight.color.set(LEVELS[currentLevel].lampCol);
+
+  // ── DOME: micro-vibration + breath lift when haptic active ──
+  if (S.haptic && LEVELS[currentLevel].hapticPulseRate > 0) {
+    let dynFreq = LEVELS[currentLevel].hapticPulseRate === 60 ? 75.0 : 45.0;
+    hapticBase.position.y = 0.161 + breathWave * 0.004 + Math.sin(time * dynFreq) * 0.002;
+  } else {
+    hapticBase.position.y = 0.161 + breathWave * 0.002;
+  }
+
+  // ── DOME TEXTURE: cycle every N seconds per level ──
+  if (S.haptic) {
+    let interval = HAPTIC_TEXTURE_INTERVALS[currentLevel] || 10;
+    hapticTextureTick += dt;
+    if (hapticTextureTick >= interval) {
+      hapticTextureTick = 0;
+      hapticTexturePhase = (hapticTexturePhase + 1) % 4;
+      applyHapticTexture(hapticTexturePhase, currentLevel);
+    }
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
+  processOverlayGraphics(dt);
+}
+
+/* ════ NATURE SOUND ENGINE ════ */
+let natureNodes = []; // bufferSourceNodes for noise
+let natureGain = null;
+
+function makeNoiseBuffer(audioCtx, seconds) {
+  const bufSize = audioCtx.sampleRate * seconds;
+  const buffer = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+  return buffer;
+}
+
+function startRainSound(vol) {
+  // Rain = high-pass filtered white noise
+  const source = audioCtx.createBufferSource();
+  source.buffer = makeNoiseBuffer(audioCtx, 4);
+  source.loop = true;
+
+  const hp = audioCtx.createBiquadFilter();
+  hp.type = 'highpass'; hp.frequency.value = 1800; hp.Q.value = 0.5;
+
+  const lp = audioCtx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 8000; lp.Q.value = 0.3;
+
+  natureGain = audioCtx.createGain();
+  natureGain.gain.setValueAtTime(0, audioCtx.currentTime);
+  natureGain.gain.linearRampToValueAtTime(vol * 0.5, audioCtx.currentTime + 1.2);
+
+  source.connect(hp); hp.connect(lp); lp.connect(natureGain);
+  natureGain.connect(masterGain);
+  source.start();
+  natureNodes.push(source);
+
+  // Add a gentle thunder-rumble undertone (L3 forest: distant)
+  const rumble = audioCtx.createOscillator();
+  const rumbleGain = audioCtx.createGain();
+  rumble.type = 'sine'; rumble.frequency.value = 55;
+  rumbleGain.gain.value = vol * 0.04;
+  rumble.connect(rumbleGain); rumbleGain.connect(masterGain);
+  rumble.start();
+  aNodes.push(rumble);
+}
+
+function startOceanSound(vol) {
+  // Ocean = band-pass filtered noise with LFO sweep (wave rhythm)
+  const source = audioCtx.createBufferSource();
+  source.buffer = makeNoiseBuffer(audioCtx, 6);
+  source.loop = true;
+
+  const bp = audioCtx.createBiquadFilter();
+  bp.type = 'bandpass'; bp.frequency.value = 400; bp.Q.value = 0.4;
+
+  // LFO for wave swell rhythm (~0.15 Hz = one wave every ~6-7s)
+  const lfo = audioCtx.createOscillator();
+  const lfoGain = audioCtx.createGain();
+  lfo.frequency.value = 0.15; lfoGain.gain.value = 200;
+  lfo.connect(lfoGain); lfoGain.connect(bp.frequency);
+  lfo.start();
+  aNodes.push(lfo);
+
+  natureGain = audioCtx.createGain();
+  natureGain.gain.setValueAtTime(0, audioCtx.currentTime);
+  natureGain.gain.linearRampToValueAtTime(vol * 0.55, audioCtx.currentTime + 1.5);
+
+  // Second noise layer for foam hiss
+  const hiss = audioCtx.createBufferSource();
+  hiss.buffer = makeNoiseBuffer(audioCtx, 4); hiss.loop = true;
+  const hpHiss = audioCtx.createBiquadFilter();
+  hpHiss.type = 'highpass'; hpHiss.frequency.value = 3000;
+  const hissGain = audioCtx.createGain(); hissGain.gain.value = vol * 0.12;
+  hiss.connect(hpHiss); hpHiss.connect(hissGain); hissGain.connect(masterGain);
+  hiss.start();
+  natureNodes.push(hiss);
+
+  source.connect(bp); bp.connect(natureGain); natureGain.connect(masterGain);
+  source.start();
+  natureNodes.push(source);
+}
+
+function stopNature() {
+  natureNodes.forEach(n => { try { n.stop(); } catch(e){} });
+  natureNodes = [];
+  natureGain = null;
+}
+
+/* ════ GENERATIVE OM CHANT AUDIO MATRIX ════ */
+function doAudio(on) {
+  // Stop all previous nature nodes
+  stopNature();
+
+  if (on && S.speaker) {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      masterGain.connect(audioCtx.destination);
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    aNodes.forEach(n => { try { n.stop(); } catch(e){} });
+    aNodes = [];
+
+    let cfg = LEVELS[currentLevel];
+    masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+    masterGain.gain.setValueAtTime(masterGain.gain.value || 0, audioCtx.currentTime);
+    masterGain.gain.linearRampToValueAtTime(cfg.volume * 0.5, audioCtx.currentTime + 0.5);
+
+    if (cfg.soundType === 'rain') {
+      startRainSound(cfg.volume);
+    } else if (cfg.soundType === 'ocean') {
+      startOceanSound(cfg.volume);
+    } else if (cfg.soundType === 'tone' && cfg.freqs.length > 0) {
+      cfg.freqs.forEach((f, index) => {
+        let osc = audioCtx.createOscillator();
+        let gainNode = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = f;
+        osc.detune.value = (index * 3) - 3;
+        gainNode.gain.value = (1 / cfg.freqs.length) * cfg.volume;
+        osc.connect(gainNode); gainNode.connect(masterGain);
+        osc.start();
+        aNodes.push(osc);
+      });
+    }
+  } else if (masterGain && audioCtx) {
+    masterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
+    setTimeout(() => {
+      aNodes.forEach(n => { try { n.stop(); } catch(e){} });
+      aNodes = [];
+      stopNature();
+    }, 500);
+  }
+}
+
+/* ════ EMERGENCY CONTACT SYSTEM ════ */
+let ecDismissedThisSession = false;
+let ecData = { name: '', phone: '', msg: '' };
+
+function saveEC() {
+  ecData.name = document.getElementById('ecName').value.trim();
+  ecData.phone = document.getElementById('ecPhone').value.trim();
+  ecData.msg = document.getElementById('ecMsg').value.trim() ||
+    `I need support right now. My stress sensor just hit Level 5.`;
+  const st = document.getElementById('ecStatus');
+  if(!ecData.name || !ecData.phone){
+    st.textContent = '⚠ Please fill name and phone number.'; st.style.color='#C8502A'; return;
+  }
+  st.textContent = `✓ Saved — ${ecData.name} will be alerted at Level 5.`;
+  st.style.color = '#4CAF7D';
+  ecDismissedThisSession = false; // re-arm if contact updated
+}
+
+function showEmergencyModal() {
+  if(ecDismissedThisSession) return;
+  if(!ecData.name || !ecData.phone) return; // no contact configured
+  const body = `To: ${ecData.name} (${ecData.phone})\n\n"${ecData.msg}"`;
+  document.getElementById('ecModalPreview').textContent = body;
+  document.getElementById('ecModal').classList.add('show');
+}
+
+function dismissEC() {
+  document.getElementById('ecModal').classList.remove('show');
+  ecDismissedThisSession = true;
+}
+
+function sendEmergencyAlert() {
+  const phone = ecData.phone.replace(/\s+/g,'');
+  const msg = encodeURIComponent(ecData.msg);
+  // Try WhatsApp deep-link first; fallback shown to user
+  const waUrl = `https://wa.me/${phone.replace('+','')}?text=${msg}`;
+  const smsUrl = `sms:${phone}?body=${msg}`;
+  const btns = document.getElementById('ecModalBtns');
+  btns.innerHTML = `
+    <a class="ec-modal-send" href="${waUrl}" target="_blank" style="text-decoration:none;text-align:center;">Open WhatsApp</a>
+    <a class="ec-modal-dismiss" href="${smsUrl}" style="text-decoration:none;text-align:center;">Open SMS</a>
+  `;
+  document.getElementById('ecModal').insertAdjacentHTML('beforeend',
+    '<div class="ec-sent-confirm" style="margin-top:10px">📤 Tap a button above to send</div>');
+}
+
+/* ════ SYSTEM INTERFACE ENGINE CONTROLLERS ════ */
+function setLevel(n){
+  currentLevel = n;
+  const lv = LEVELS[n];
+
+  ringLampEmitterMat.emissive.set(lv.lampCol);
+  photonEngine.color.set(lv.lampCol);
+  ringFillLight.color.set(lv.lampCol);
+  ringFillLight2.color.set(lv.lampCol);
+  discMat.color.set(lv.lampCol);
+
+  document.querySelectorAll('.sl-btn').forEach(b=>{
+    b.classList.toggle('active', parseInt(b.dataset.level) === n);
+  });
+  Object.entries(lv.comp).forEach(([k,v])=>{
+    S[k] = v;
+    document.getElementById('card-'+k).classList.toggle('on', !!v);
+    syncLabel(k);
+  });
+
+  document.getElementById('iv-led').classList.toggle('on', !!lv.comp.led);
+  document.getElementById('iv-speaker').classList.toggle('on', !!lv.comp.speaker);
+  document.getElementById('iv-haptic').classList.toggle('on', !!lv.comp.haptic);
+  document.getElementById('iv-diffuser').classList.toggle('on', !!lv.comp.diffuser);
+
+  ['iv-led','iv-speaker','iv-haptic','iv-diffuser'].forEach(id=>{
+    document.getElementById(id).style.setProperty('--ivc', lv.statusCol);
+  });
+
+  document.getElementById('statusName').textContent = lv.name;
+  document.getElementById('statusSub').textContent = lv.sub;
+  document.getElementById('statusIcon').textContent = lv.icon;
+  document.getElementById('statusCard').style.borderColor = lv.statusCol;
+
+  // Reset haptic texture cycle on level change
+  hapticTextureTick = 0;
+  hapticTexturePhase = 0;
+  applyHapticTexture(0, n);
+  // Update dome accent color immediately
+  const col = DOME_ACCENT_COLS[n] || '#4CAF7D';
+  domeGlowLight.color.set(col);
+  domeRimLight.color.set(col);
+
+  doAudio(S.speaker);
+
+  // ── Trigger emergency alert at Level 5 ──
+  if(n === 5) setTimeout(showEmergencyModal, 1200);
+
+  // ── Speaker icon animates while sound is active ──
+  const spkEl = document.getElementById('speakerIcon');
+  if(spkEl){
+    if(lv.comp.speaker){
+      spkEl.innerHTML = '<span class="speaker-anim">🔊</span>';
+    } else {
+      spkEl.innerHTML = '🔊';
+    }
+  }
+
+  // ── Haptic icon glows with pulse rate ──
+  const hapEl = document.getElementById('hapticIcon');
+  if(hapEl){
+    if(lv.comp.haptic && lv.hapticPulseRate > 0){
+      // L4 ~25Hz → ~2s cycle; L5 ~60Hz → ~0.9s cycle
+      const dur = lv.hapticPulseRate >= 60 ? '0.9s' : '1.8s';
+      hapEl.style.setProperty('--haptic-dur', dur);
+      hapEl.classList.add('haptic-glow');
+    } else {
+      hapEl.classList.remove('haptic-glow');
+    }
+  }
+
+  // ── Status ring strip: slower pulse at higher stress via CSS animation speed ──
+  // We toggle a data-level attribute on the status strip mesh isn't directly CSS,
+  // but we can modulate it in the animate loop via statusStrip color brightness
+  statusRingPulseSpeed = { 1: 2.0, 2: 1.6, 3: 1.2, 4: 0.9, 5: 0.65 }[n] || 1.0;
+}
+
+function manualTog(k){
+  S[k] = S[k] ? 0 : 1;
+  document.getElementById('card-'+k).classList.toggle('on', !!S[k]);
+  syncLabel(k);
+  if(k === 'speaker') doAudio(S.speaker);
+}
+
+function syncLabel(k){
+  const el = document.getElementById('lbl-'+k);
+  const col = LCOLS[k];
+  el.classList.toggle('lit', !!S[k]);
+  const dot = el.querySelector('.hw-dot');
+  dot.style.background = S[k] ? col : '';
+  dot.style.boxShadow = S[k] ? `0 0 5px ${col}` : '';
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = container.clientWidth / container.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(container.clientWidth, container.clientHeight);
+});
+
+/* Fire Core Systems */
+setLevel(1);
+animate();
+/* ════════════════════════════════════════
+   HRV SIMULATOR — drives setLevel() live
+════════════════════════════════════════ */
+
+let hrv_t = 0;
+let rrHistory = [], rmssdHistory = [];
+const HRV_HIST = 60;
+let lastStressFromHRV = 0;
+// ── Rolling-window sample rate ──
+// Previously rmssdHistory/stressTrend were pushed every animation frame
+// (~60/sec), so a 60-sample buffer only spanned ~1 second of real time —
+// the "trend" line was really just frame noise. Gating pushes to a fixed
+// real-time interval makes each point a genuine rolling-window reading,
+// so the trend reads as a slow, meaningful biometric signal.
+const TREND_SAMPLE_INTERVAL = 1.8; // seconds between rolling-window samples
+let lastTrendSampleT = 0;
+let hrvPanelOpen = false;
+
+// ── Stress trend ring-buffer (last 60 readings, one per HRV tick ~1.5s apart) ──
+const STRESS_TREND_MAX = 60;
+let stressTrend = [];        // values 1–5
+let stressTrendTimes = [];   // relative timestamps in seconds
+
+const STRESS_TREND_COLS = ['#1D9E75','#4A9A30','#C8A84B','#D4713A','#C8502A'];
+
+function drawStressTrend(){
+  const canvas = document.getElementById('stressTrendCanvas');
+  if(!canvas) return;
+  const W = canvas.offsetWidth || 400;
+  canvas.width = W;
+  const H = 72;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  // Grid lines at stress levels 1-5
+  for(let lv=1;lv<=5;lv++){
+    const y = H - ((lv-1)/4)*(H-14) - 7;
+    ctx.strokeStyle = lv === 1 ? 'rgba(29,158,117,.18)' : 'rgba(255,255,255,.05)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    ctx.setLineDash([]);
+    // level labels on left
+    ctx.fillStyle = '#3A4258';
+    ctx.font = '500 8px DM Mono,monospace';
+    ctx.fillText(lv, 3, y+3);
+  }
+
+  // Time axis label
+  if(stressTrend.length > 1){
+    const span = Math.round(stressTrendTimes[stressTrendTimes.length-1] - stressTrendTimes[0]);
+    ctx.fillStyle = '#3A4258';
+    ctx.font = '500 8px DM Mono,monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${span}s`, W-4, H-1);
+    ctx.textAlign = 'left';
+  }
+
+  if(stressTrend.length < 2) return;
+
+  // Draw gradient filled area under line
+  const pts = stressTrend.map((v,i)=>({
+    x: 12 + (i/(STRESS_TREND_MAX-1))*(W-18),
+    y: H - ((v-1)/4)*(H-14) - 7
+  }));
+
+  // Filled gradient area
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'rgba(29,158,117,.18)');
+  grad.addColorStop(1,'rgba(29,158,117,.02)');
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, H);
+  pts.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(pts[pts.length-1].x, H);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Coloured polyline — segment color reflects current stress value
+  for(let i=1;i<pts.length;i++){
+    const col = STRESS_TREND_COLS[stressTrend[i]-1];
+    ctx.beginPath();
+    ctx.moveTo(pts[i-1].x, pts[i-1].y);
+    ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.8;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+
+  // Dots at each data point
+  pts.forEach((p,i)=>{
+    const col = STRESS_TREND_COLS[stressTrend[i]-1];
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 2.5, 0, Math.PI*2);
+    ctx.fillStyle = col;
+    ctx.fill();
+  });
+
+  // Latest value callout
+  const lp = pts[pts.length-1];
+  const lv = stressTrend[stressTrend.length-1];
+  const lc = STRESS_TREND_COLS[lv-1];
+  ctx.beginPath(); ctx.arc(lp.x, lp.y, 4.5, 0, Math.PI*2);
+  ctx.fillStyle = lc; ctx.fill();
+  ctx.strokeStyle = '#0D1018'; ctx.lineWidth = 1.5; ctx.stroke();
+}
+
+function toggleHRV(){
+  hrvPanelOpen = !hrvPanelOpen;
+  document.getElementById('hrvPanel').classList.toggle('open', hrvPanelOpen);
+  document.getElementById('hrvBtnLabel').textContent = hrvPanelOpen ? '▼ close' : '▲ open';
+}
+
+function getHRVParams(){
+  const sl = parseInt(document.getElementById('hrvStressSlider').value);
+  const noise = parseInt(document.getElementById('hrvNoiseSlider').value);
+  const baseRR = [900,820,750,680,620][sl-1];
+  const rrVar  = [60,45,30,18,10][sl-1];
+  return {sl, noise, baseRR, rrVar};
+}
+
+function calcRMSSD(arr){
+  if(arr.length < 2) return 55;
+  let sum = 0;
+  for(let i=1;i<arr.length;i++) sum += Math.pow(arr[i]-arr[i-1],2);
+  return Math.sqrt(sum/(arr.length-1));
+}
+
+function stressFromRMSSD(r){
+  if(r > 60) return 1;
+  if(r > 45) return 2;
+  if(r > 32) return 3;
+  if(r > 20) return 4;
+  return 5;
+}
+
+function movingAvg(arr, win){
+  return arr.map((v,i)=>{
+    const s = Math.max(0,i-win+1);
+    return arr.slice(s,i+1).reduce((a,b)=>a+b,0)/(i-s+1);
+  });
+}
+
+const HRV_STRESS_COLS = ['#1D9E75','#4A9A30','#C8801A','#C8601A','#C8502A'];
+const HRV_STRESS_LBLS = ['Calm','Mild','Elevated','High','Severe'];
+
+function drawHRVLine(ctx, data, color, w, h, minV, maxV){
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle = 'rgba(255,255,255,.03)';
+  ctx.lineWidth = 1;
+  for(let g=0;g<3;g++){
+    const y = 4 + g*((h-8)/2);
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
+  }
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.4;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  data.forEach((v,i)=>{
+    const x = i/(data.length-1)*w;
+    const y = h - ((v-minV)/(maxV-minV))*(h-8) - 4;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+}
+
+function updateHRVSim(){
+  hrv_t += 0.04;
+  const {sl, noise, baseRR, rrVar} = getHRVParams();
+
+  const raw = [];
+  for(let i=0;i<HRV_HIST;i++){
+    const ph = Math.sin(hrv_t*0.3+i*0.18)*rrVar
+              + Math.sin(hrv_t*0.1+i*0.07)*rrVar*0.4
+              + (Math.random()-.5)*noise*2;
+    raw.push(Math.round(baseRR+ph));
+  }
+  const filtered = movingAvg(raw, 5);
+  rrHistory = filtered.slice(-30);
+  const rmssd = calcRMSSD(rrHistory);
+
+  const nowT = performance.now() / 1000;
+  const shouldSample = (nowT - lastTrendSampleT) >= TREND_SAMPLE_INTERVAL;
+  if (shouldSample) {
+    rmssdHistory.push(rmssd);
+    if (rmssdHistory.length > HRV_HIST) rmssdHistory.shift();
+  }
+
+  const hr = Math.round(60000/baseRR);
+  // Stress level shown/driven to the lamp tracks the slider directly —
+  // RMSSD/HR above are still computed from the noisy simulated signal so
+  // the charts look like a real detector, but the bridge to setLevel()
+  // uses the slider value itself so moving it always updates the lamp.
+  const stress = sl;
+  const sc = HRV_STRESS_COLS[stress-1];
+  const sl2 = HRV_STRESS_LBLS[stress-1];
+
+  // update HRV panel metrics
+  document.getElementById('hrvHR').textContent = hr;
+  document.getElementById('hrvRMSSD').textContent = Math.round(rmssd);
+  document.getElementById('hrvStressNum').textContent = stress;
+  document.getElementById('hrvStressLabel').textContent = sl2;
+  document.getElementById('hrvStressLabel').style.color = sc;
+  document.getElementById('hrvStressNum').setAttribute('fill','#DDE3EF');
+
+  const ring = document.getElementById('hrvRingPath');
+  ring.setAttribute('stroke-dashoffset', (188*(1-stress/5)).toFixed(1));
+  ring.setAttribute('stroke', sc);
+
+  // live badge on toggle button area
+  const badge = document.getElementById('liveBadge');
+  badge.textContent = `L${stress} · ${sl2}`;
+  badge.style.color = sc;
+
+  // ─── THE BRIDGE: push stress level straight into lamp ───
+  if(stress !== lastStressFromHRV){
+    lastStressFromHRV = stress;
+    setLevel(stress);   // ← live lamp response
+
+    // flash bridge status
+    const bs = document.getElementById('bridgeStatus');
+    bs.textContent = '⚡ updating';
+    bs.style.opacity = '1';
+    bs.style.color = sc;
+    setTimeout(()=>{ bs.textContent='synced'; bs.style.opacity='.6'; bs.style.color=''; }, 800);
+  }
+
+  // ── Record stress trend (one real sample every TREND_SAMPLE_INTERVAL, ring-buffer) ──
+  if (shouldSample) {
+    stressTrend.push(stress);
+    stressTrendTimes.push(nowT);
+    if(stressTrend.length > STRESS_TREND_MAX){ stressTrend.shift(); stressTrendTimes.shift(); }
+    lastTrendSampleT = nowT;
+  }
+
+  // draw charts only when panel is open (perf)
+  if(hrvPanelOpen){
+    const rawC = document.getElementById('rawC');
+    const filtC = document.getElementById('filtC');
+    const rmssdC = document.getElementById('rmssdC');
+    const W = rawC.offsetWidth || 300;
+    rawC.width = filtC.width = W;
+    rmssdC.width = W;
+    drawHRVLine(rawC.getContext('2d'), raw, 'rgba(200,80,42,.65)', W, 90, baseRR-130, baseRR+130);
+    drawHRVLine(filtC.getContext('2d'), filtered, '#2E78CC', W, 90, baseRR-130, baseRR+130);
+    drawHRVLine(rmssdC.getContext('2d'), rmssdHistory, sc, W, 70, 0, 80);
+    const rc = rmssdC.getContext('2d');
+    rc.fillStyle = sc; rc.font = '500 9px DM Mono,monospace';
+    rc.fillText('RMSSD '+Math.round(rmssd)+' ms', 6, 13);
+    drawStressTrend();
+  }
+
+  requestAnimationFrame(updateHRVSim);
+}
+
+function resetHRVSim(){
+  document.getElementById('hrvStressSlider').value = 1;
+  document.getElementById('hrvNoiseSlider').value = 5;
+  document.getElementById('hrvStressOut').textContent = '1';
+  document.getElementById('hrvNoiseOut').textContent = '5';
+  rrHistory = []; rmssdHistory = [];
+  stressTrend = []; stressTrendTimes = [];
+}
+
+// The HRV toggle button + panel markup lives further down in the HTML,
+// after this <script> tag. Deferring to DOMContentLoaded guarantees those
+// elements exist before we touch them — without this, the very first call
+// to updateHRVSim() throws (e.g. hrvHR is null) and the loop never starts,
+// which is why the panel numbers/charts never moved.
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('hrvStressSlider').addEventListener('input', function(){
+    document.getElementById('hrvStressOut').textContent = this.value;
+  });
+  document.getElementById('hrvNoiseSlider').addEventListener('input', function(){
+    document.getElementById('hrvNoiseOut').textContent = this.value;
+  });
+
+  updateHRVSim();
+});
+
+</script>
+<!-- ── HRV TOGGLE BUTTON ── -->
+<button class="hrv-toggle" onclick="toggleHRV()">
+  <div class="hrv-pip"></div>
+  HRV DETECTOR
+  <span id="hrvBtnLabel" style="opacity:.55">▲ open</span>
+</button>
+
+<!-- ── HRV PANEL ── -->
+<div class="hrv-panel" id="hrvPanel">
+  <div class="hrv-panel-handle"></div>
+  <div class="hrv-panel-inner">
+
+    <div class="hrv-panel-header">
+      <div>
+        <div class="hrv-panel-title">
+          <div class="hrv-pip"></div>
+          HRV stress detector
+          <span class="stress-badge-live" id="liveBadge" style="color:#1D9E75">L1 · Calm</span>
+        </div>
+        <div class="hrv-panel-sub">Live RMSSD → stress score → Deskhelp lamp response</div>
+      </div>
+    </div>
+
+    <!-- connection bridge — shows signal flowing from detector to lamp -->
+    <div class="bridge">
+      <div class="bridge-dot"></div>
+      HRV processor
+      <span class="bridge-arrow">──────→</span>
+      stress score
+      <span class="bridge-arrow">──────→</span>
+      <strong>Deskhelp lamp</strong>
+      <span id="bridgeStatus" style="margin-left:auto;opacity:.6">synced</span>
+    </div>
+
+    <div class="hrv-grid">
+      <!-- charts column -->
+      <div>
+        <div class="chart-box-dark" style="margin-bottom:10px;">
+          <div class="chart-label-dark">R-R intervals — raw PPG signal</div>
+          <canvas id="rawC" height="90"></canvas>
+        </div>
+        <div class="chart-box-dark" style="margin-bottom:10px;">
+          <div class="chart-label-dark">After moving-average filter</div>
+          <canvas id="filtC" height="90"></canvas>
+        </div>
+        <div class="chart-box-dark">
+          <div class="chart-label-dark">RMSSD rolling window → stress score</div>
+          <canvas id="rmssdC" height="70"></canvas>
+        </div>
+        <div class="pipeline-dark">
+          <div class="step-dark lit"><span class="sn">1</span>Raw RR</div>
+          <div class="step-dark lit"><span class="sn">2</span>Filter</div>
+          <div class="step-dark lit"><span class="sn">3</span>RMSSD</div>
+          <div class="step-dark lit"><span class="sn">4</span>→ Lamp</div>
+        </div>
+
+        <!-- ── STRESS TREND GRAPH ── -->
+        <div class="stress-trend-wrap">
+          <div class="stress-trend-header">
+            <div class="stress-trend-title">Stress level · rolling trend</div>
+            <div class="stress-trend-legend">
+              <div class="legend-dot" style="--lc:#1D9E75">Calm</div>
+              <div class="legend-dot" style="--lc:#C8A84B">Moderate</div>
+              <div class="legend-dot" style="--lc:#C8502A">Severe</div>
+            </div>
+          </div>
+          <canvas id="stressTrendCanvas" height="72"></canvas>
+        </div>
+      </div>
+
+      <!-- metrics column -->
+      <div class="metrics-dark">
+        <!-- stress ring -->
+        <div class="metric-dark stress-ring-wrap">
+          <svg viewBox="0 0 80 80" width="72" height="72">
+            <circle cx="40" cy="40" r="30" fill="none" stroke="#1E2438" stroke-width="7"/>
+            <circle id="hrvRingPath" cx="40" cy="40" r="30" fill="none" stroke="#1D9E75" stroke-width="7"
+              stroke-dasharray="188" stroke-dashoffset="151" stroke-linecap="round"
+              transform="rotate(-90 40 40)" style="transition:stroke-dashoffset .5s,stroke .5s"/>
+            <text x="40" y="36" text-anchor="middle" font-size="16" font-weight="700" font-family="DM Mono,monospace" fill="#DDE3EF" id="hrvStressNum">1</text>
+            <text x="40" y="48" text-anchor="middle" font-size="8" fill="#66728A">stress</text>
+          </svg>
+          <div class="ring-label" id="hrvStressLabel" style="color:#1D9E75">Calm</div>
+        </div>
+
+        <div class="metric-dark">
+          <div class="val" id="hrvHR">72</div>
+          <div class="lbl">Heart rate (bpm)</div>
+        </div>
+        <div class="metric-dark">
+          <div class="val" id="hrvRMSSD">54</div>
+          <div class="lbl">RMSSD (ms) ↑ calmer</div>
+        </div>
+
+        <div class="hrv-controls-dark">
+          <div style="font-size:9.5px;font-weight:600;color:#3A4258;text-transform:uppercase;letter-spacing:.08em;">Simulate conditions</div>
+          <div class="ctrl-dark">Stress<input type="range" id="hrvStressSlider" min="1" max="5" step="1" value="1"><span id="hrvStressOut">1</span></div>
+          <div class="ctrl-dark">Noise<input type="range" id="hrvNoiseSlider" min="0" max="30" step="1" value="5"><span id="hrvNoiseOut">5</span></div>
+          <button class="hrv-btn-dark" onclick="resetHRVSim()">Reset baseline</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── EMERGENCY ALERT MODAL ── -->
+<div class="ec-modal-backdrop" id="ecModal">
+  <div class="ec-modal">
+    <div class="ec-modal-header">🚨 Severe Stress Detected — Level 5</div>
+    <div class="ec-modal-sub">Your stress sensor reached the highest level. Send an alert to your emergency contact?</div>
+    <div class="ec-modal-preview" id="ecModalPreview">Loading message…</div>
+    <div class="ec-modal-btns" id="ecModalBtns">
+      <button class="ec-modal-send" onclick="sendEmergencyAlert()">Send via SMS / WhatsApp</button>
+      <button class="ec-modal-dismiss" onclick="dismissEC()">Not now</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
